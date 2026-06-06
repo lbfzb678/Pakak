@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAKAK - Order Tracking</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/script.js"></script>
+</head>
+<body>
+
+<header>
+    <nav class="navbar">
+        <div class="logo">PAKAK</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="products.html">Products</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="tracking.html" class="active">Tracking</a></li>
+            <li><a href="wishlist.html">Wishlist ❤️</a></li>
+            <li><a href="cart.html">Cart 🛒 <span id="cartCount" style="background:red;color:white;border-radius:50%;padding:2px 7px;font-size:12px;">0</span></a></li>
+        </ul>
+        <div class="nav-auth">
+            <a href="profile.html" class="nav-profile-btn">👤 Profile</a>
+            <a href="login.html" class="nav-login-btn">Login</a>
+        </div>
+        <button id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+    </nav>
+</header>
+
+<section class="tracking-page">
+
+    <h1>🚚 Order Tracking</h1>
+    <p>Enter the SKU number found on your product card to track your order.</p>
+
+    <div class="tracking-sku-list">
+        <h3>Available SKU Numbers:</h3>
+        <table class="sku-table">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>PKK-0001</strong></td>
+                    <td>Gaming Laptop</td>
+                    <td>Out for Delivery 🚚</td>
+                </tr>
+                <tr>
+                    <td><strong>PKK-0002</strong></td>
+                    <td>Smartphone Pro</td>
+                    <td>Processing 📦</td>
+                </tr>
+                <tr>
+                    <td><strong>PKK-0003</strong></td>
+                    <td>Wireless Headphones</td>
+                    <td>Shipped ✈️</td>
+                </tr>
+                <tr>
+                    <td><strong>PKK-0004</strong></td>
+                    <td>Smart Watch</td>
+                    <td>Out for Delivery 🚚</td>
+                </tr>
+                <tr>
+                    <td><strong>PKK-0005</strong></td>
+                    <td>Mechanical Keyboard</td>
+                    <td>Delivered ✅</td>
+                </tr>
+                <tr>
+                    <td><strong>PKK-0006</strong></td>
+                    <td>Gaming Mouse</td>
+                    <td>Processing 📦</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="tracking-form">
+        <input
+            type="text"
+            id="trackingNumber"
+            placeholder="Enter SKU (e.g. PKK-0001)"
+        >
+        <button onclick="trackOrder()">Track Order</button>
+    </div>
+
+    <div id="trackingResult"></div>
+
+</section>
+
+<footer>
+    <p>© 2026 PAKAK. All Rights Reserved.</p>
+</footer>
+
+<button id="topBtn" onclick="scrollToTop()">↑</button>
+
+</body>
+</html>
