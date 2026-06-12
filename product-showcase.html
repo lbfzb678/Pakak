@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TechStore – Latest Products</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --tag-bg: #1e1e2e;
+    --radius: 16px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.9);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  nav { display: flex; gap: 8px; }
+  nav button {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    padding: 7px 18px; border-radius: 100px; font-size: 0.85rem; cursor: pointer;
+    transition: all .2s;
+  }
+  nav button:hover, nav button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 72px 40px 48px;
+    text-align: center;
+    background: radial-gradient(ellipse at 50% 0%, rgba(108,99,255,.15) 0%, transparent 60%);
+  }
+  .hero-eyebrow { font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 700; letter-spacing: -1.5px; line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p { color: var(--muted); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+  /* ── FILTER TABS ── */
+  .filters {
+    display: flex; gap: 10px; padding: 0 40px 32px;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .filter-btn {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--muted); padding: 8px 20px; border-radius: 100px;
+    font-size: 0.85rem; cursor: pointer; transition: all .2s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 0 40px 60px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  /* ── PRODUCT CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-6px);
+    border-color: var(--accent);
+    box-shadow: 0 20px 60px rgba(108,99,255,.2);
+  }
+  .card-badge {
+    position: absolute; top: 14px; left: 14px;
+    background: var(--accent2); color: #000;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 100px; text-transform: uppercase;
+  }
+  .card-badge.hot { background: #ff4d6d; color: #fff; }
+  .card-badge.sale { background: #ffd60a; color: #000; }
+
+  .card-img {
+    width: 100%; height: 200px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1e1e2e 0%, #13131a 100%);
+    font-size: 5rem;
+    padding: 20px;
+  }
+  .card-body { padding: 20px; }
+  .card-category { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; font-weight: 600; }
+  .card-name { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .card-tagline { font-size: 0.83rem; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-price { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--accent2); }
+  .card-price s { font-size: 0.85rem; color: var(--muted); margin-left: 6px; font-weight: 400; }
+  .card-cta {
+    background: var(--accent); color: #fff;
+    border: none; padding: 9px 18px; border-radius: 100px;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+  .card-cta:hover { background: #7c73ff; transform: scale(1.04); }
+
+  /* ── MODAL OVERLAY ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s;
+  }
+  .overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%; max-width: 860px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(30px) scale(0.97);
+    transition: transform .3s;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .overlay.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-header {
+    position: sticky; top: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 2;
+  }
+  .modal-header-left { display: flex; align-items: center; gap: 14px; }
+  .modal-emoji { font-size: 2rem; }
+  .modal-category { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); font-weight: 600; }
+  .modal-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; }
+  .modal-close {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); width: 38px; height: 38px; border-radius: 50%;
+    font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+    flex-shrink: 0;
+  }
+  .modal-close:hover { background: #ff4d6d; border-color: #ff4d6d; }
+
+  .modal-body { padding: 28px; }
+  .modal-top { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-bottom: 32px; }
+  @media(max-width:640px){ .modal-top { grid-template-columns: 1fr; } }
+
+  .modal-img-wrap {
+    background: linear-gradient(135deg, var(--card) 0%, #0f0f18 100%);
+    border-radius: 14px; height: 220px;
+    display: flex; align-items: center; justify-content: center; font-size: 7rem;
+    border: 1px solid var(--border);
+  }
+  .modal-meta { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+  .modal-price-tag { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; color: var(--accent2); }
+  .modal-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+  .modal-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag {
+    background: var(--tag-bg); border: 1px solid var(--border);
+    color: var(--muted); font-size: 0.75rem; padding: 4px 12px; border-radius: 100px;
+  }
+  .tag.accent { border-color: var(--accent); color: var(--accent); }
+
+  /* Specs */
+  .specs-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text);
+  }
+  .specs-title::after {
+    content:''; flex:1; height:1px; background: var(--border);
+  }
+
+  .specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .spec-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color .2s;
+  }
+  .spec-item:hover { border-color: var(--accent); }
+  .spec-key { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+  .spec-val { font-size: 0.9rem; font-weight: 600; color: var(--text); line-height: 1.4; }
+
+  .modal-action {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    border: none; padding: 13px 28px; border-radius: 100px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-primary:hover { background: #7c73ff; }
+  .btn-secondary {
+    background: none; color: var(--text);
+    border: 1px solid var(--border); padding: 13px 28px; border-radius: 100px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: border-color .2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+
+  @media(max-width:600px){
+    header { padding: 16px 20px; }
+    .hero, .grid, .filters { padding-left: 20px; padding-right: 20px; }
+    nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Tech<span>Store</span></div>
+  <nav>
+    <button class="active">All Products</button>
+    <button>Phones</button>
+    <button>Laptops</button>
+    <button>Audio</button>
+    <button>Tablets</button>
+  </nav>
+</header>
+
+<section class="hero">
+  <p class="hero-eyebrow">2025 Lineup</p>
+  <h1>The <em>latest</em> tech,<br>all in one place.</h1>
+  <p>Click any product to explore full specs, features, and pricing.</p>
+</section>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filterCards('all', this)">All</button>
+  <button class="filter-btn" onclick="filterCards('phone', this)">📱 Phones</button>
+  <button class="filter-btn" onclick="filterCards('laptop', this)">💻 Laptops</button>
+  <button class="filter-btn" onclick="filterCards('audio', this)">🎧 Audio</button>
+  <button class="filter-btn" onclick="filterCards('tablet', this)">📟 Tablets</button>
+</div>
+
+<div class="grid" id="productGrid"></div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <span class="modal-emoji" id="mEmoji"></span>
+        <div>
+          <div class="modal-category" id="mCategory"></div>
+          <div class="modal-title" id="mTitle"></div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal(null)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <div class="modal-img-wrap" id="mImg"></div>
+        <div class="modal-meta">
+          <div class="modal-price-tag" id="mPrice"></div>
+          <p class="modal-desc" id="mDesc"></p>
+          <div class="modal-tags" id="mTags"></div>
+        </div>
+      </div>
+      <div class="specs-title">Tech Specs</div>
+      <div class="specs-grid" id="mSpecs"></div>
+      <div class="modal-action">
+        <button class="btn-primary">Add to Cart</button>
+        <button class="btn-secondary">Compare</button>
+        <button class="btn-secondary">Save to Wishlist</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const products = [
+  {
+    id: 1, category: "phone", emoji: "📱",
+    badge: "New", badgeType: "",
+    name: "Samsung Galaxy S25",
+    tagline: "Snapdragon 8 Elite · AI-powered · 50MP triple camera",
+    price: "$799",
+    oldPrice: "$849",
+    desc: "The Galaxy S25 brings the world's most powerful mobile chip paired with Galaxy AI features for a next-level experience in photography, productivity, and gaming.",
+    tags: ["Android 15", "Galaxy AI", "IP68", "5G", "Wi-Fi 7"],
+    specs: [
+      { k: "Display", v: "6.2\" Dynamic AMOLED 2X, 2340×1080, 120Hz, 2600 nits" },
+      { k: "Processor", v: "Snapdragon 8 Elite (3nm), Octa-core 4.47GHz" },
+      { k: "RAM / Storage", v: "12GB RAM · 128GB / 256GB / 512GB" },
+      { k: "Rear Cameras", v: "50MP (f/1.8) + 12MP Ultra-wide + 10MP 3× Telephoto" },
+      { k: "Front Camera", v: "12MP, f/2.2, 4K video" },
+      { k: "Battery", v: "4000 mAh · 25W wired · 15W wireless" },
+      { k: "OS", v: "Android 15 · One UI 7 · 7 years updates" },
+      { k: "Build", v: "Gorilla Glass Victus 2 · Aluminum frame · IP68" },
+      { k: "Connectivity", v: "5G, Wi-Fi 7, Bluetooth 5.4, NFC, USB-C 3.2" },
+      { k: "Dimensions", v: "146.9 × 70.5 × 7.2 mm · 162g" },
+      { k: "Biometrics", v: "Ultrasonic in-display fingerprint" },
+      { k: "Colors", v: "Icy Blue, Mint, Navy, Silver Shadow" },
+    ]
+  },
+  {
+    id: 2, category: "phone", emoji: "📱",
+    badge: "HOT", badgeType: "hot",
+    name: "Apple iPhone 16 Pro",
+    tagline: "A18 Pro · Apple Intelligence · ProRes 4K video",
+    price: "$999",
+    desc: "The iPhone 16 Pro with A18 Pro chip, the biggest camera upgrade in iPhone history, and a larger 6.3-inch Super Retina XDR display with ProMotion.",
+    tags: ["iOS 18", "Apple Intelligence", "IP68", "5G", "Titanium"],
+    specs: [
+      { k: "Display", v: "6.3\" OLED Super Retina XDR, 2622×1206, 1–120Hz ProMotion, 2000 nits" },
+      { k: "Processor", v: "Apple A18 Pro (3nm), 6-core CPU, 6-core GPU" },
+      { k: "RAM / Storage", v: "8GB RAM · 128GB / 256GB / 512GB / 1TB" },
+      { k: "Rear Cameras", v: "48MP Fusion (f/1.78) + 48MP Ultra Wide + 12MP 5× Telephoto" },
+      { k: "Front Camera", v: "12MP TrueDepth, autofocus, 4K60 video" },
+      { k: "Battery", v: "3582 mAh · 27W wired · 25W MagSafe" },
+      { k: "OS", v: "iOS 18 with Apple Intelligence" },
+      { k: "Build", v: "Ceramic Shield front · Titanium frame · Textured matte glass back" },
+      { k: "Connectivity", v: "5G, Wi-Fi 7, Bluetooth 5.3, NFC, USB-C 3 (10Gbps)" },
+      { k: "Dimensions", v: "149.6 × 71.5 × 8.25 mm · 199g" },
+      { k: "Biometrics", v: "Face ID (3D)" },
+      { k: "Colors", v: "Black Titanium, White Titanium, Natural Titanium, Desert Titanium" },
+    ]
+  },
+  {
+    id: 3, category: "laptop", emoji: "💻",
+    badge: "2025", badgeType: "",
+    name: "MacBook Pro 14\" M5",
+    tagline: "Apple M5 · Up to 32GB RAM · 24hr battery · Space Black",
+    price: "$1,599",
+    desc: "The MacBook Pro with M5 is 14% faster in single-core and 19% faster in multi-core tasks than its predecessor, with breakthrough AI performance and an incredible Liquid Retina XDR display.",
+    tags: ["macOS Sequoia", "Apple Intelligence", "Liquid Retina XDR", "MagSafe 3"],
+    specs: [
+      { k: "Chip", v: "Apple M5 · 10-core CPU · 10-core GPU · 16-core Neural Engine" },
+      { k: "Memory", v: "16GB / 24GB / 32GB Unified Memory · 120GB/s bandwidth" },
+      { k: "Storage", v: "512GB / 1TB / 2TB / 4TB SSD" },
+      { k: "Display", v: "14.2\" Liquid Retina XDR · 3024×1964 · 254ppi · 1000 nits (HDR: 1600)" },
+      { k: "Battery", v: "72.4 Wh · Up to 24 hrs · MagSafe 3 + USB-C charging" },
+      { k: "Ports", v: "3× Thunderbolt 5 · HDMI 2.1 · SD card · MagSafe 3 · 3.5mm jack" },
+      { k: "Connectivity", v: "Wi-Fi 6E, Bluetooth 5.3" },
+      { k: "Webcam", v: "12MP Center Stage camera · Studio 3-mic array" },
+      { k: "Weight", v: "3.5 lbs (1.58 kg)" },
+      { k: "Dimensions", v: "312.6 × 221.2 × 15.5 mm" },
+      { k: "OS", v: "macOS Sequoia with Apple Intelligence" },
+      { k: "Colors", v: "Space Black, Silver" },
+    ]
+  },
+  {
+    id: 4, category: "laptop", emoji: "💻",
+    badge: "Popular", badgeType: "",
+    name: "MacBook Pro 16\" M4 Max",
+    tagline: "M4 Max · 48GB RAM · 40-core GPU · Pro-level powerhouse",
+    price: "$3,499",
+    desc: "For creative professionals who need ultimate performance — the MacBook Pro 16 with M4 Max delivers up to 546GB/s memory bandwidth and supports up to 128GB unified memory.",
+    tags: ["M4 Max", "macOS Sequoia", "16.2\" XDR", "Up to 128GB RAM"],
+    specs: [
+      { k: "Chip", v: "Apple M4 Max · 16-core CPU · 40-core GPU · 16-core Neural Engine" },
+      { k: "Memory", v: "36GB / 48GB / 64GB / 128GB Unified Memory · 546GB/s bandwidth" },
+      { k: "Storage", v: "512GB / 1TB / 2TB / 4TB / 8TB SSD" },
+      { k: "Display", v: "16.2\" Liquid Retina XDR · 3456×2234 · 254ppi · ProMotion 120Hz" },
+      { k: "Battery", v: "Up to 24 hrs · 140W USB-C Power Adapter" },
+      { k: "Ports", v: "3× Thunderbolt 5 · HDMI 2.1 · SDXC · MagSafe 3 · 3.5mm jack" },
+      { k: "Connectivity", v: "Wi-Fi 6E, Bluetooth 5.3" },
+      { k: "Webcam", v: "12MP Center Stage · Studio 6-speaker sound system" },
+      { k: "Weight", v: "4.7 lbs (2.14 kg)" },
+      { k: "Dimensions", v: "355.7 × 248.1 × 16.8 mm" },
+      { k: "OS", v: "macOS Sequoia with Apple Intelligence" },
+      { k: "Colors", v: "Space Black, Silver" },
+    ]
+  },
+  {
+    id: 5, category: "audio", emoji: "🎧",
+    badge: "New", badgeType: "",
+    name: "Sony WH-1000XM6",
+    tagline: "Best-in-class ANC · 40hr battery · Hi-Res Audio",
+    price: "$449",
+    desc: "Sony's flagship noise-cancelling headphones with the new QN3 HD chip, improved Precise Voice Pickup, and industry-leading 40-hour battery life with fast charging.",
+    tags: ["LDAC", "Hi-Res Audio", "ANC", "Multipoint", "Google Fast Pair"],
+    specs: [
+      { k: "Driver Unit", v: "30mm dome-type (CCAW Voice Coil)" },
+      { k: "Noise Cancelling", v: "Auto NC Optimizer · Dual microphone ANC · QN3 HD chip" },
+      { k: "Frequency Response", v: "4Hz – 40,000Hz (JEITA)" },
+      { k: "Battery Life", v: "40 hrs (ANC on) · 5 min quick charge = 3 hrs playback" },
+      { k: "Charging", v: "USB-C · Full charge in ~3.5 hrs" },
+      { k: "Codecs", v: "LDAC, AAC, SBC" },
+      { k: "Connectivity", v: "Bluetooth 5.3 · Multipoint (2 devices)" },
+      { k: "Microphones", v: "5 beamforming mics for calls · Precise Voice Pickup 2.0" },
+      { k: "Weight", v: "250g" },
+      { k: "Controls", v: "Touch sensor + physical buttons · Voice assistant support" },
+      { k: "Foldable", v: "Yes · Carrying pouch included" },
+      { k: "Colors", v: "Midnight Black, Platinum Silver, Warm Copper" },
+    ]
+  },
+  {
+    id: 6, category: "tablet", emoji: "📟",
+    badge: "Sale", badgeType: "sale",
+    name: "iPad Pro 13\" M4",
+    tagline: "M4 chip · Ultra Retina XDR OLED · Thinnest Apple product ever",
+    price: "$1,099",
+    oldPrice: "$1,299",
+    desc: "The most advanced iPad ever features a stunning Ultra Retina XDR OLED display with tandem OLED technology, the powerful M4 chip, and the slimmest design Apple has ever created.",
+    tags: ["M4 Chip", "OLED Display", "Apple Pencil Pro", "iPadOS 18", "Wi-Fi 6E"],
+    specs: [
+      { k: "Chip", v: "Apple M4 · 10-core CPU · 10-core GPU · 16-core Neural Engine" },
+      { k: "Display", v: "13\" Ultra Retina XDR OLED (Tandem) · 2752×2064 · 264ppi · 1000 nits (HDR: 1600)" },
+      { k: "Storage", v: "256GB / 512GB / 1TB / 2TB" },
+      { k: "RAM", v: "8GB (256GB/512GB) or 16GB (1TB/2TB)" },
+      { k: "Cameras", v: "12MP rear (f/1.8, 4K video) · 12MP TrueDepth Ultra-Wide front" },
+      { k: "Battery", v: "Up to 10 hrs web browsing · 40.88 Wh · USB-C 45W charging" },
+      { k: "Connectivity", v: "Wi-Fi 6E (802.11ax) · Bluetooth 5.3 · USB-C 4 (40Gbps)" },
+      { k: "Face ID", v: "Yes · Landscape + Portrait" },
+      { k: "Pencil / Keyboard", v: "Apple Pencil Pro + Magic Keyboard with glass trackpad" },
+      { k: "Dimensions", v: "281.6 × 215.5 × 5.1 mm · 579g (Wi-Fi)" },
+      { k: "OS", v: "iPadOS 18 with Apple Intelligence" },
+      { k: "Colors", v: "Space Black, Silver" },
+    ]
+  },
+  {
+    id: 7, category: "phone", emoji: "📱",
+    badge: "New", badgeType: "",
+    name: "Samsung Galaxy S25 Edge",
+    tagline: "5.8mm ultra-thin · Snapdragon 8 Elite · 200MP camera",
+    price: "$1,100",
+    desc: "The Galaxy S25 Edge is Samsung's thinnest flagship ever at just 5.8mm, featuring a 6.7-inch display with 3K resolution and a 200MP main camera in a featherlight titanium frame.",
+    tags: ["Android 15", "Snapdragon 8 Elite", "200MP", "IP68", "Titanium"],
+    specs: [
+      { k: "Display", v: "6.7\" AMOLED · 3120×1440 · 120Hz · HDR10+ · 513ppi" },
+      { k: "Processor", v: "Snapdragon 8 Elite (3nm)" },
+      { k: "RAM / Storage", v: "12GB RAM · 256GB / 512GB" },
+      { k: "Rear Cameras", v: "200MP (f/1.7) + 12MP Ultra-wide" },
+      { k: "Front Camera", v: "12MP, 4K video" },
+      { k: "Battery", v: "3900 mAh · 25W wired · 15W wireless" },
+      { k: "Build", v: "Gorilla Glass Ceramic 2 + Titanium frame · IP68" },
+      { k: "Dimensions", v: "158.2 × 75.6 × 5.8 mm · 163g — world's thinnest flagship" },
+      { k: "Connectivity", v: "5G, Wi-Fi 7, Bluetooth 5.4, NFC, USB-C 3.2" },
+      { k: "OS", v: "Android 15 · One UI 7 · 7 years updates" },
+      { k: "Biometrics", v: "Ultrasonic in-display fingerprint" },
+      { k: "Colors", v: "Titanium Icyblue, Titanium Silver, Titanium Jetblack" },
+    ]
+  },
+  {
+    id: 8, category: "audio", emoji: "🎧",
+    badge: "Popular", badgeType: "",
+    name: "Apple AirPods Pro 3",
+    tagline: "H2 chip · Adaptive ANC · Hearing Aid feature · 36hr total",
+    price: "$249",
+    desc: "AirPods Pro 3 with the H2 chip deliver next-level Active Noise Cancellation, a personalized Spatial Audio experience, and a groundbreaking Hearing Aid feature cleared by the FDA.",
+    tags: ["H2 Chip", "ANC", "Spatial Audio", "Hearing Aid", "MagSafe"],
+    specs: [
+      { k: "Chip", v: "Apple H2 chip (earbuds) · U1 chip (case)" },
+      { k: "ANC", v: "Adaptive Active Noise Cancellation · Transparency Mode" },
+      { k: "Audio", v: "Personalized Spatial Audio with dynamic head tracking · AAC-ELD" },
+      { k: "Hearing", v: "FDA-cleared Hearing Aid (up to 25dB loss) · Hearing Test" },
+      { k: "Battery (earbuds)", v: "Up to 7 hrs (ANC off) · 5.5 hrs (ANC on)" },
+      { k: "Battery (total)", v: "Up to 36 hrs with MagSafe Charging Case" },
+      { k: "Charging", v: "MagSafe · Qi2 · Lightning (adapter) · USB-C" },
+      { k: "Connectivity", v: "Bluetooth 5.3 · Automatic switching" },
+      { k: "Controls", v: "Force sensor · Volume swipe · Conversation Aware" },
+      { k: "Resistance", v: "IP54 (earbuds + case)" },
+      { k: "Find My", v: "Precision Finding with U1 chip" },
+      { k: "Colors", v: "White" },
+    ]
+  },
+];
+
+function renderCards(filter = 'all') {
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = '';
+  const list = filter === 'all' ? products : products.filter(p => p.category === filter);
+  list.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => openModal(p.id);
+    card.innerHTML = `
+      ${p.badge ? `<div class="card-badge ${p.badgeType}">${p.badge}</div>` : ''}
+      <div class="card-img">${p.emoji}</div>
+      <div class="card-body">
+        <div class="card-category">${p.category === 'phone' ? 'Smartphone' : p.category === 'laptop' ? 'Laptop' : p.category === 'audio' ? 'Audio' : 'Tablet'}</div>
+        <div class="card-name">${p.name}</div>
+        <div class="card-tagline">${p.tagline}</div>
+        <div class="card-footer">
+          <div class="card-price">${p.price} ${p.oldPrice ? `<s>${p.oldPrice}</s>` : ''}</div>
+          <button class="card-cta">View Specs →</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function openModal(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('mEmoji').textContent = p.emoji;
+  document.getElementById('mCategory').textContent = p.category === 'phone' ? 'Smartphone' : p.category === 'laptop' ? 'Laptop' : p.category === 'audio' ? 'Audio' : 'Tablet';
+  document.getElementById('mTitle').textContent = p.name;
+  document.getElementById('mImg').textContent = p.emoji;
+  document.getElementById('mPrice').textContent = p.price;
+  document.getElementById('mDesc').textContent = p.desc;
+  document.getElementById('mTags').innerHTML = p.tags.map(t => `<span class="tag accent">${t}</span>`).join('');
+  document.getElementById('mSpecs').innerHTML = p.specs.map(s =>
+    `<div class="spec-item"><div class="spec-key">${s.k}</div><div class="spec-val">${s.v}</div></div>`
+  ).join('');
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('overlay')) return;
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(null); });
+
+function filterCards(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards(cat);
+}
+
+renderCards();
+</script>
+</body>
+</html>
