@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAKAK - Products</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/script.js"></script>
+    <style>
+        /* ── CLICKABLE CARD ── */
+        .product-card {
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* Hover overlay hint */
+        .product-card::after {
+            content: '🔍 View Specs';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            background: rgba(108, 99, 255, 0.88);
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 0;
+            overflow: hidden;
+            border-radius: 10px 10px 0 0;
+            transition: height .25s ease, opacity .25s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .product-card:hover::after {
+            height: 42px;
+            opacity: 1;
+        }
+
+        /* Lift effect on hover */
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(108,99,255,0.18);
+            border-color: #6c63ff;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+        }
+
+        /* Prevent buttons inside card from triggering card click visually */
+        .product-card button { position: relative; z-index: 1; }
+
+        /* ── MODAL OVERLAY ── */
+        #specOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #specOverlay.open { display: flex; }
+
+        #specModal {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 780px;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            animation: slideUp .3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        /* Dark mode modal */
+        body.dark-mode #specModal { background: #1e1e2e; color: #e8e8f0; }
+        body.dark-mode .spec-item  { background: #2a2a3a; border-color: #3a3a4a; }
+        body.dark-mode .spec-key   { color: #8888aa; }
+        body.dark-mode .spec-val   { color: #e8e8f0; }
+        body.dark-mode #specModal .modal-header { background: #13131a; border-color: #2a2a3a; }
+        body.dark-mode #specModal .tag { background: #2a2a3a; color: #8888aa; border-color: #3a3a4a; }
+
+        .modal-header {
+            position: sticky; top: 0;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 18px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 2;
+            border-radius: 16px 16px 0 0;
+        }
+        .modal-header-left { display: flex; align-items: center; gap: 12px; }
+        .modal-header-emoji { font-size: 2rem; }
+        .modal-header-cat { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2px; color: #6c63ff; font-weight: 700; margin-bottom: 2px; }
+        .modal-header-name { font-size: 1.25rem; font-weight: 700; }
+        .modal-close-btn {
+            background: #f0f0f5; border: none;
+            width: 36px; height: 36px; border-radius: 50%;
+            font-size: 1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .2s;
+        }
+        .modal-close-btn:hover { background: #ff4d6d; color: #fff; }
+
+        .modal-body { padding: 24px; }
+
+        .modal-top-row {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+            align-items: start;
+        }
+        @media(max-width:540px){ .modal-top-row { grid-template-columns: 1fr; } }
+
+        .modal-thumb {
+            background: #f5f5fa;
+            border-radius: 12px;
+            height: 150px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 5rem;
+            border: 1px solid #eee;
+        }
+        body.dark-mode .modal-thumb { background: #2a2a3a; border-color: #3a3a4a; }
+
+        .modal-meta-price {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #6c63ff;
+            margin-bottom: 8px;
+        }
+        .modal-meta-sku { font-size: 0.78rem; color: #999; margin-bottom: 10px; }
+        .modal-meta-desc { font-size: 0.875rem; color: #555; line-height: 1.7; margin-bottom: 14px; }
+        body.dark-mode .modal-meta-desc { color: #aaa; }
+
+        .modal-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag {
+            background: #f0f0f8;
+            border: 1px solid #ddd;
+            color: #555;
+            font-size: 0.72rem;
+            padding: 4px 11px;
+            border-radius: 100px;
+        }
+
+        .specs-heading {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #6c63ff;
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .specs-heading::after { content: ''; flex: 1; height: 1px; background: #eee; }
+        body.dark-mode .specs-heading::after { background: #2a2a3a; }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .spec-item {
+            background: #f8f8fc;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .spec-key {
+            font-size: 0.67rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #999;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .spec-val { font-size: 0.86rem; font-weight: 600; color: #222; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<header>
+    <nav class="navbar">
+        <div class="logo">PAKAK</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="products.html" class="active">Products</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="tracking.html">Tracking</a></li>
+            <li><a href="wishlist.html">Wishlist ❤️</a></li>
+            <li><a href="cart.html">Cart 🛒 <span id="cartCount" style="background:red;color:white;border-radius:50%;padding:2px 7px;font-size:12px;">0</span></a></li>
+        </ul>
+        <div class="nav-auth">
+            <a href="profile.html" class="nav-profile-btn">👤 Profile</a>
+            <a href="login.html" class="nav-login-btn">Login</a>
+        </div>
+        <button id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+    </nav>
+</header>
+
+<section class="products-page">
+
+    <h1>Our Products</h1>
+
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search products..."
+        onkeyup="searchProducts()"
+        class="search-bar"
+    >
+
+    <div class="product-grid" id="productContainer">
+
+        <!-- ══════════════════════════════════════
+             ORIGINAL 6 PRODUCTS
+        ══════════════════════════════════════ -->
+
+        <div class="product-card searchable" data-spec="gaming-laptop">
+            <img src="images/laptop.jpg" alt="Gaming Laptop">
+            <h3>Gaming Laptop</h3>
+            <p class="product-id">SKU: PKK-0001</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱45,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Gaming Laptop',45999)">Add to Cart</button>
+            <button onclick="addToWishlist('Gaming Laptop')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="smartphone-pro">
+            <img src="images/smartphone.jpg" alt="Smartphone Pro">
+            <h3>Smartphone Pro</h3>
+            <p class="product-id">SKU: PKK-0002</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱39,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Smartphone Pro',39999)">Add to Cart</button>
+            <button onclick="addToWishlist('Smartphone Pro')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="wireless-headphones">
+            <img src="images/headphones.jpg" alt="Wireless Headphones">
+            <h3>Wireless Headphones</h3>
+            <p class="product-id">SKU: PKK-0003</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱2,499</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Wireless Headphones',2499)">Add to Cart</button>
+            <button onclick="addToWishlist('Wireless Headphones')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="smart-watch">
+            <img src="images/smartwatch.jpg" alt="Smart Watch">
+            <h3>Smart Watch</h3>
+            <p class="product-id">SKU: PKK-0004</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱5,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Smart Watch',5999)">Add to Cart</button>
+            <button onclick="addToWishlist('Smart Watch')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="mech-keyboard">
+            <img src="images/keyboard.jpg" alt="Mechanical Keyboard">
+            <h3>Mechanical Keyboard</h3>
+            <p class="product-id">SKU: PKK-0005</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱2,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Mechanical Keyboard',2999)">Add to Cart</button>
+            <button onclick="addToWishlist('Mechanical Keyboard')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="gaming-mouse">
+            <img src="images/mouse.jpg" alt="Gaming Mouse">
+            <h3>Gaming Mouse</h3>
+            <p class="product-id">SKU: PKK-0006</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱1,499</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Gaming Mouse',1499)">Add to Cart</button>
+            <button onclick="addToWishlist('Gaming Mouse')">❤️ Wishlist</button>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             NEW PRODUCTS (PKK-0007 onwards)
+        ══════════════════════════════════════ -->
+
+        <div class="product-card searchable" data-spec="galaxy-s25">
+            <img src="images/samsungs25.jpg" alt="Samsung Galaxy S25" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.alt='📱';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>Samsung Galaxy S25</h3>
+            <p class="product-id">SKU: PKK-0007</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱45,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Samsung Galaxy S25',45999)">Add to Cart</button>
+            <button onclick="addToWishlist('Samsung Galaxy S25')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="iphone16pro">
+            <img src="images/iphone16.jpg" alt="Apple iPhone 16 Pro" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>Apple iPhone 16 Pro</h3>
+            <p class="product-id">SKU: PKK-0008</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱57,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Apple iPhone 16 Pro',57999)">Add to Cart</button>
+            <button onclick="addToWishlist('Apple iPhone 16 Pro')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="galaxy-s25-edge">
+            <img src="images/samsungs25edge.jpg" alt="Samsung Galaxy S25 Edge" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>Samsung Galaxy S25 Edge</h3>
+            <p class="product-id">SKU: PKK-0009</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱63,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Samsung Galaxy S25 Edge',63999)">Add to Cart</button>
+            <button onclick="addToWishlist('Samsung Galaxy S25 Edge')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="mbp-m5">
+            <img src="images/macbookm5.jpg" alt="MacBook Pro 14-inch M5" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>MacBook Pro 14" M5</h3>
+            <p class="product-id">SKU: PKK-0010</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱92,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'MacBook Pro 14 M5',92999)">Add to Cart</button>
+            <button onclick="addToWishlist('MacBook Pro 14 M5')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="mbp-m4max">
+            <img src="images/macbookm4max.jpg" alt="MacBook Pro 16-inch M4 Max" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>MacBook Pro 16" M4 Max</h3>
+            <p class="product-id">SKU: PKK-0011</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱199,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'MacBook Pro 16 M4 Max',199999)">Add to Cart</button>
+            <button onclick="addToWishlist('MacBook Pro 16 M4 Max')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="ipad-pro-m4">
+            <img src="images/ipadprom4.jpg" alt="iPad Pro 13-inch M4" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>iPad Pro 13" M4</h3>
+            <p class="product-id">SKU: PKK-0012</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱63,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'iPad Pro 13 M4',63999)">Add to Cart</button>
+            <button onclick="addToWishlist('iPad Pro 13 M4')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="sony-xm6">
+            <img src="images/sonywh.jpg" alt="Sony WH-1000XM6" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>Sony WH-1000XM6</h3>
+            <p class="product-id">SKU: PKK-0013</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱25,999</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Sony WH-1000XM6',25999)">Add to Cart</button>
+            <button onclick="addToWishlist('Sony WH-1000XM6')">❤️ Wishlist</button>
+        </div>
+
+        <div class="product-card searchable" data-spec="airpods-pro3">
+            <img src="images/appleairpods.jpg" alt="Apple AirPods Pro 3" onerror="this.style.fontSize='4rem';this.style.textAlign='center';this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+            <h3>Apple AirPods Pro 3</h3>
+            <p class="product-id">SKU: PKK-0014</p>
+            <div class="rating">⭐⭐⭐⭐⭐</div>
+            <p>₱14,499</p>
+            <div class="quantity-box">
+                <button onclick="decreaseQty(this)">-</button>
+                <span class="qty">1</span>
+                <button onclick="increaseQty(this)">+</button>
+            </div>
+            <button onclick="addToCartWithQty(this,'Apple AirPods Pro 3',14499)">Add to Cart</button>
+            <button onclick="addToWishlist('Apple AirPods Pro 3')">❤️ Wishlist</button>
+        </div>
+
+    </div>
+
+</section>
+
+<footer>
+    <p>© 2026 PAKAK. All Rights Reserved.</p>
+</footer>
+
+<button id="topBtn" onclick="scrollToTop()">↑</button>
+
+<!-- ══════════════════════════════════════
+     PRODUCT INFO MODAL
+══════════════════════════════════════ -->
+<div id="specOverlay" onclick="handleOverlayClick(event)">
+    <div id="specModal">
+        <div class="modal-header">
+            <div class="modal-header-left">
+                <span class="modal-header-emoji" id="modalEmoji"></span>
+                <div>
+                    <div class="modal-header-cat" id="modalCat"></div>
+                    <div class="modal-header-name" id="modalName"></div>
+                </div>
+            </div>
+            <button class="modal-close-btn" onclick="closeSpec()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-top-row">
+                <div class="modal-thumb" id="modalThumb"></div>
+                <div>
+                    <div class="modal-meta-price" id="modalPrice"></div>
+                    <div class="modal-meta-sku" id="modalSku"></div>
+                    <p class="modal-meta-desc" id="modalDesc"></p>
+                    <div class="modal-tags" id="modalTags"></div>
+                </div>
+            </div>
+            <div class="specs-heading">Tech Specs</div>
+            <div class="specs-grid" id="modalSpecs"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ── PRODUCT SPEC DATA ── */
+const SPECS = {
+    'gaming-laptop': {
+        emoji: '💻', cat: 'Gaming Laptop', name: 'Gaming Laptop', sku: 'SKU: PKK-0001', price: '₱45,999',
+        desc: 'A high-performance gaming laptop built for demanding titles and creative work, featuring a fast refresh display and dedicated GPU.',
+        tags: ['Gaming', 'Windows 11', 'Dedicated GPU', 'RGB Keyboard', 'High Refresh'],
+        specs: [
+            { k: 'Processor', v: 'Intel Core i7-13700H (13th Gen) / AMD Ryzen 7 7745HX' },
+            { k: 'GPU', v: 'NVIDIA GeForce RTX 4060 8GB GDDR6' },
+            { k: 'RAM', v: '16GB DDR5 (upgradeable to 32GB)' },
+            { k: 'Storage', v: '512GB NVMe SSD (M.2 PCIe 4.0)' },
+            { k: 'Display', v: '15.6" FHD IPS, 144Hz, 100% sRGB' },
+            { k: 'Battery', v: '72 Wh · Up to 6 hrs general use' },
+            { k: 'OS', v: 'Windows 11 Home' },
+            { k: 'Ports', v: 'USB-A ×3, USB-C, HDMI 2.1, RJ45, SD card' },
+            { k: 'Connectivity', v: 'Wi-Fi 6, Bluetooth 5.2' },
+            { k: 'Keyboard', v: 'RGB backlit per-key' },
+            { k: 'Weight', v: '~2.2 kg' },
+            { k: 'Cooling', v: 'Dual fan + 4 heat pipes' },
+        ]
+    },
+    'smartphone-pro': {
+        emoji: '📱', cat: 'Smartphone', name: 'Smartphone Pro', sku: 'SKU: PKK-0002', price: '₱39,999',
+        desc: 'A premium Android smartphone with a flagship processor, versatile triple-camera system, and all-day battery life.',
+        tags: ['Android 14', '5G', 'AMOLED', 'Triple Camera', 'IP67'],
+        specs: [
+            { k: 'Display', v: '6.7" AMOLED, 2400×1080, 120Hz, 1000 nits' },
+            { k: 'Processor', v: 'Snapdragon 8 Gen 2 (4nm)' },
+            { k: 'RAM / Storage', v: '12GB RAM · 256GB UFS 3.1' },
+            { k: 'Rear Cameras', v: '108MP (f/1.8) + 12MP Ultra-wide + 10MP Telephoto' },
+            { k: 'Front Camera', v: '32MP, f/2.2' },
+            { k: 'Battery', v: '5000 mAh · 67W fast charging · 30W wireless' },
+            { k: 'OS', v: 'Android 14 · 3 years OS updates' },
+            { k: 'Build', v: 'Gorilla Glass 5 front/back · Aluminum frame · IP67' },
+            { k: 'Connectivity', v: '5G, Wi-Fi 6, Bluetooth 5.3, NFC, USB-C' },
+            { k: 'Biometrics', v: 'In-display fingerprint + Face unlock' },
+            { k: 'Audio', v: 'Stereo speakers · Dolby Atmos' },
+            { k: 'Colors', v: 'Midnight Black, Glacier White, Ocean Blue' },
+        ]
+    },
+    'wireless-headphones': {
+        emoji: '🎧', cat: 'Audio', name: 'Wireless Headphones', sku: 'SKU: PKK-0003', price: '₱2,499',
+        desc: 'Over-ear wireless headphones with active noise cancellation and up to 30 hours playback for immersive everyday listening.',
+        tags: ['ANC', 'Bluetooth 5.0', '30hr Battery', 'Foldable', 'USB-C'],
+        specs: [
+            { k: 'Driver', v: '40mm dynamic driver' },
+            { k: 'Frequency Response', v: '20Hz – 20,000Hz' },
+            { k: 'Noise Cancelling', v: 'Active Noise Cancellation (Hybrid)' },
+            { k: 'Battery Life', v: '30 hrs (ANC on) · 40 hrs (ANC off)' },
+            { k: 'Charging', v: 'USB-C · Full charge in ~2 hrs · 10 min = 3 hrs' },
+            { k: 'Bluetooth', v: 'Bluetooth 5.0 · Range up to 10m' },
+            { k: 'Codecs', v: 'AAC, SBC' },
+            { k: 'Microphone', v: 'Built-in mic for calls' },
+            { k: 'Controls', v: 'On-cup physical buttons' },
+            { k: 'Foldable', v: 'Yes · Soft carrying case included' },
+            { k: 'Weight', v: '260g' },
+            { k: 'Colors', v: 'Black, White, Navy Blue' },
+        ]
+    },
+    'smart-watch': {
+        emoji: '⌚', cat: 'Wearable', name: 'Smart Watch', sku: 'SKU: PKK-0004', price: '₱5,999',
+        desc: 'A feature-packed smartwatch with health monitoring, GPS, and a bright AMOLED display that keeps you connected all day.',
+        tags: ['Health Monitoring', 'GPS', 'AMOLED', 'IP68', 'Sleep Tracking'],
+        specs: [
+            { k: 'Display', v: '1.4" AMOLED, 454×454, Always-on' },
+            { k: 'Processor', v: 'Dual-core 1.4GHz' },
+            { k: 'Storage', v: '4GB internal' },
+            { k: 'Battery', v: 'Up to 14 days (smart mode) · 25 hrs GPS' },
+            { k: 'Connectivity', v: 'Bluetooth 5.0, Wi-Fi 2.4GHz, GPS/GNSS' },
+            { k: 'Health Sensors', v: 'Heart rate, SpO2, Stress, Sleep, Skin temp' },
+            { k: 'Resistance', v: 'IP68 · 5ATM water resistant' },
+            { k: 'Strap', v: '22mm silicone (interchangeable)' },
+            { k: 'Compatibility', v: 'Android 6.0+ / iOS 10+' },
+            { k: 'OS', v: 'Wear OS / Proprietary' },
+            { k: 'Weight', v: '32g (without strap)' },
+            { k: 'Colors', v: 'Midnight, Silver, Rose Gold' },
+        ]
+    },
+    'mech-keyboard': {
+        emoji: '⌨️', cat: 'Peripherals', name: 'Mechanical Keyboard', sku: 'SKU: PKK-0005', price: '₱2,999',
+        desc: 'A full-size mechanical keyboard with tactile switches, per-key RGB backlighting, and a durable aluminum frame for gaming and productivity.',
+        tags: ['Mechanical', 'RGB', 'Anti-ghosting', 'Aluminum Frame', 'N-Key Rollover'],
+        specs: [
+            { k: 'Switch Type', v: 'Gateron Red (Linear) / Blue (Clicky) / Brown (Tactile)' },
+            { k: 'Actuation Force', v: '45g (Red) · 60g (Blue) · 55g (Brown)' },
+            { k: 'Layout', v: 'Full-size 104-key' },
+            { k: 'Backlighting', v: 'Per-key RGB (16.8M colors)' },
+            { k: 'Anti-ghosting', v: 'N-Key Rollover (full)' },
+            { k: 'Connection', v: 'USB-A (braided cable, detachable)' },
+            { k: 'Frame', v: 'Aircraft-grade aluminum top plate' },
+            { k: 'Keycaps', v: 'Double-shot PBT' },
+            { k: 'Polling Rate', v: '1000Hz' },
+            { k: 'Macros', v: 'Programmable via software' },
+            { k: 'Weight', v: '~1.1 kg' },
+            { k: 'Colors', v: 'Space Gray, Black, White' },
+        ]
+    },
+    'gaming-mouse': {
+        emoji: '🖱️', cat: 'Peripherals', name: 'Gaming Mouse', sku: 'SKU: PKK-0006', price: '₱1,499',
+        desc: 'A precision gaming mouse with a high-accuracy optical sensor, customizable RGB, and programmable side buttons for competitive play.',
+        tags: ['25,600 DPI', 'RGB', 'Programmable', '7 Buttons', 'Optical Sensor'],
+        specs: [
+            { k: 'Sensor', v: 'PixArt PAW3395 Optical' },
+            { k: 'DPI Range', v: '100 – 25,600 DPI (adjustable)' },
+            { k: 'Polling Rate', v: '125 / 500 / 1000Hz' },
+            { k: 'Buttons', v: '7 programmable buttons' },
+            { k: 'Switch', v: 'Huano Blue Shell Pink Dot (50M clicks)' },
+            { k: 'Backlighting', v: 'RGB (16.8M colors)' },
+            { k: 'Connection', v: 'USB-A wired (braided)' },
+            { k: 'Weight', v: '~85g (without cable)' },
+            { k: 'Grip Style', v: 'Palm / Claw / Fingertip' },
+            { k: 'Cable Length', v: '1.8m' },
+            { k: 'Software', v: 'Companion app for macros & lighting' },
+            { k: 'Colors', v: 'Matte Black, White' },
+        ]
+    },
+
+    /* ── NEW PRODUCTS ── */
+    'galaxy-s25': {
+        emoji: '📱', cat: 'Smartphone', name: 'Samsung Galaxy S25', sku: 'SKU: PKK-0007', price: '₱45,999',
+        desc: 'The Galaxy S25 brings the world\'s most powerful mobile chip paired with Galaxy AI features for next-level photography, productivity, and gaming.',
+        tags: ['Android 15', 'Galaxy AI', 'IP68', '5G', 'Wi-Fi 7'],
+        specs: [
+            { k: 'Display', v: '6.2" Dynamic AMOLED 2X · 2340×1080 · 120Hz · 2600 nits' },
+            { k: 'Processor', v: 'Snapdragon 8 Elite (3nm) · Octa-core up to 4.47GHz' },
+            { k: 'RAM / Storage', v: '12GB RAM · 128GB / 256GB / 512GB' },
+            { k: 'Rear Cameras', v: '50MP (f/1.8) + 12MP Ultra-wide + 10MP 3× Telephoto' },
+            { k: 'Front Camera', v: '12MP · f/2.2 · 4K video' },
+            { k: 'Battery', v: '4000 mAh · 25W wired · 15W wireless charging' },
+            { k: 'OS', v: 'Android 15 · One UI 7 · 7 years OS + security updates' },
+            { k: 'Build', v: 'Gorilla Glass Victus 2 · Aluminum frame · IP68' },
+            { k: 'Connectivity', v: '5G, Wi-Fi 7, Bluetooth 5.4, NFC, USB-C 3.2' },
+            { k: 'Dimensions', v: '146.9 × 70.5 × 7.2 mm · 162g' },
+            { k: 'Biometrics', v: 'Ultrasonic in-display fingerprint' },
+            { k: 'Colors', v: 'Icy Blue, Mint, Navy, Silver Shadow' },
+        ]
+    },
+    'iphone16pro': {
+        emoji: '📱', cat: 'Smartphone', name: 'Apple iPhone 16 Pro', sku: 'SKU: PKK-0008', price: '₱57,999',
+        desc: 'The iPhone 16 Pro with A18 Pro chip delivers the biggest camera upgrade in iPhone history and a larger 6.3" Super Retina XDR display with ProMotion.',
+        tags: ['iOS 18', 'Apple Intelligence', 'IP68', '5G', 'Titanium'],
+        specs: [
+            { k: 'Display', v: '6.3" OLED Super Retina XDR · 2622×1206 · 1–120Hz ProMotion · 2000 nits' },
+            { k: 'Processor', v: 'Apple A18 Pro (3nm) · 6-core CPU · 6-core GPU' },
+            { k: 'RAM / Storage', v: '8GB RAM · 128GB / 256GB / 512GB / 1TB' },
+            { k: 'Rear Cameras', v: '48MP Fusion (f/1.78) + 48MP Ultra Wide + 12MP 5× Telephoto' },
+            { k: 'Front Camera', v: '12MP TrueDepth · Autofocus · 4K 60fps video' },
+            { k: 'Battery', v: '3582 mAh · 27W wired · 25W MagSafe wireless' },
+            { k: 'OS', v: 'iOS 18 with Apple Intelligence' },
+            { k: 'Build', v: 'Ceramic Shield front · Titanium frame · Textured matte glass back' },
+            { k: 'Connectivity', v: '5G, Wi-Fi 7, Bluetooth 5.3, NFC, USB-C 3 (10Gbps)' },
+            { k: 'Dimensions', v: '149.6 × 71.5 × 8.25 mm · 199g' },
+            { k: 'Biometrics', v: 'Face ID (3D facial recognition)' },
+            { k: 'Colors', v: 'Black Titanium, White Titanium, Natural Titanium, Desert Titanium' },
+        ]
+    },
+    'galaxy-s25-edge': {
+        emoji: '📱', cat: 'Smartphone', name: 'Samsung Galaxy S25 Edge', sku: 'SKU: PKK-0009', price: '₱63,999',
+        desc: 'Samsung\'s thinnest flagship ever at just 5.8mm — a 6.7" 3K display, 200MP main camera, and titanium frame in a featherlight body.',
+        tags: ['Android 15', 'Snapdragon 8 Elite', '200MP', 'IP68', 'Titanium'],
+        specs: [
+            { k: 'Display', v: '6.7" AMOLED · 3120×1440 · 120Hz · HDR10+ · 513ppi' },
+            { k: 'Processor', v: 'Snapdragon 8 Elite (3nm)' },
+            { k: 'RAM / Storage', v: '12GB RAM · 256GB / 512GB' },
+            { k: 'Rear Cameras', v: '200MP (f/1.7) + 12MP Ultra-wide' },
+            { k: 'Front Camera', v: '12MP · 4K video' },
+            { k: 'Battery', v: '3900 mAh · 25W wired · 15W wireless' },
+            { k: 'Build', v: 'Gorilla Glass Ceramic 2 + Titanium frame · IP68' },
+            { k: 'Dimensions', v: '158.2 × 75.6 × 5.8 mm · 163g (world\'s thinnest flagship)' },
+            { k: 'Connectivity', v: '5G, Wi-Fi 7, Bluetooth 5.4, NFC, USB-C 3.2' },
+            { k: 'OS', v: 'Android 15 · One UI 7 · 7 years updates' },
+            { k: 'Biometrics', v: 'Ultrasonic in-display fingerprint' },
+            { k: 'Colors', v: 'Titanium Icyblue, Titanium Silver, Titanium Jetblack' },
+        ]
+    },
+    'mbp-m5': {
+        emoji: '💻', cat: 'Laptop', name: 'MacBook Pro 14" M5', sku: 'SKU: PKK-0010', price: '₱92,999',
+        desc: 'The 2025 MacBook Pro with M5 is 14% faster in single-core and 19% faster in multi-core tasks vs its predecessor, with AI performance and a stunning Liquid Retina XDR display.',
+        tags: ['macOS Sequoia', 'Apple Intelligence', 'M5 Chip', 'MagSafe 3', '24hr Battery'],
+        specs: [
+            { k: 'Chip', v: 'Apple M5 · 10-core CPU · 10-core GPU · 16-core Neural Engine' },
+            { k: 'Memory', v: '16GB / 24GB / 32GB Unified Memory · 120GB/s bandwidth' },
+            { k: 'Storage', v: '512GB / 1TB / 2TB / 4TB SSD' },
+            { k: 'Display', v: '14.2" Liquid Retina XDR · 3024×1964 · 254ppi · ProMotion 120Hz · 1000 nits' },
+            { k: 'Battery', v: '72.4 Wh · Up to 24 hrs · MagSafe 3 charging' },
+            { k: 'Ports', v: '3× Thunderbolt 5 · HDMI 2.1 · SD card · MagSafe 3 · 3.5mm jack' },
+            { k: 'Connectivity', v: 'Wi-Fi 6E, Bluetooth 5.3' },
+            { k: 'Webcam', v: '12MP Center Stage · Studio 3-mic array · 6-speaker system' },
+            { k: 'OS', v: 'macOS Sequoia with Apple Intelligence' },
+            { k: 'Dimensions', v: '312.6 × 221.2 × 15.5 mm · 1.58 kg (3.5 lbs)' },
+            { k: 'Keyboard', v: 'Backlit Magic Keyboard · Touch ID · Force Touch trackpad' },
+            { k: 'Colors', v: 'Space Black, Silver' },
+        ]
+    },
+    'mbp-m4max': {
+        emoji: '💻', cat: 'Laptop', name: 'MacBook Pro 16" M4 Max', sku: 'SKU: PKK-0011', price: '₱199,999',
+        desc: 'For creative professionals — the MacBook Pro 16 with M4 Max delivers 546GB/s memory bandwidth, up to 128GB unified memory, and a gorgeous 16.2" XDR display.',
+        tags: ['M4 Max', 'macOS Sequoia', '16.2" XDR', 'Up to 128GB', 'Thunderbolt 5'],
+        specs: [
+            { k: 'Chip', v: 'Apple M4 Max · 16-core CPU · 40-core GPU · 16-core Neural Engine' },
+            { k: 'Memory', v: '36GB / 48GB / 64GB / 128GB Unified Memory · 546GB/s bandwidth' },
+            { k: 'Storage', v: '512GB / 1TB / 2TB / 4TB / 8TB SSD' },
+            { k: 'Display', v: '16.2" Liquid Retina XDR · 3456×2234 · 254ppi · ProMotion 120Hz' },
+            { k: 'Battery', v: 'Up to 24 hrs · 140W USB-C Power Adapter' },
+            { k: 'Ports', v: '3× Thunderbolt 5 · HDMI 2.1 · SDXC · MagSafe 3 · 3.5mm jack' },
+            { k: 'Connectivity', v: 'Wi-Fi 6E, Bluetooth 5.3' },
+            { k: 'Webcam', v: '12MP Center Stage · Studio 6-speaker sound system' },
+            { k: 'OS', v: 'macOS Sequoia with Apple Intelligence' },
+            { k: 'Dimensions', v: '355.7 × 248.1 × 16.8 mm · 2.14 kg (4.7 lbs)' },
+            { k: 'External Displays', v: 'Up to 3 external displays (6K + 5K + 4K)' },
+            { k: 'Colors', v: 'Space Black, Silver' },
+        ]
+    },
+    'ipad-pro-m4': {
+        emoji: '📟', cat: 'Tablet', name: 'iPad Pro 13" M4', sku: 'SKU: PKK-0012', price: '₱63,999',
+        desc: 'The most advanced iPad ever — Ultra Retina XDR Tandem OLED display, M4 chip, and the thinnest Apple product design at just 5.1mm.',
+        tags: ['M4 Chip', 'Tandem OLED', 'Apple Pencil Pro', 'iPadOS 18', 'Wi-Fi 6E'],
+        specs: [
+            { k: 'Chip', v: 'Apple M4 · 10-core CPU · 10-core GPU · 16-core Neural Engine' },
+            { k: 'Display', v: '13" Ultra Retina XDR OLED (Tandem) · 2752×2064 · 264ppi · 1000 nits' },
+            { k: 'Storage', v: '256GB / 512GB / 1TB / 2TB' },
+            { k: 'RAM', v: '8GB (256GB/512GB) · 16GB (1TB/2TB)' },
+            { k: 'Cameras', v: '12MP rear f/1.8 (4K video) · 12MP TrueDepth Ultra-Wide front' },
+            { k: 'Battery', v: 'Up to 10 hrs · 40.88 Wh · USB-C 45W charging' },
+            { k: 'Connectivity', v: 'Wi-Fi 6E (802.11ax) · Bluetooth 5.3 · USB-C 4 (40Gbps)' },
+            { k: 'Face ID', v: 'Yes · Works in landscape and portrait' },
+            { k: 'Accessories', v: 'Apple Pencil Pro · Magic Keyboard with glass trackpad' },
+            { k: 'OS', v: 'iPadOS 18 with Apple Intelligence' },
+            { k: 'Dimensions', v: '281.6 × 215.5 × 5.1 mm · 579g (Wi-Fi)' },
+            { k: 'Colors', v: 'Space Black, Silver' },
+        ]
+    },
+    'sony-xm6': {
+        emoji: '🎧', cat: 'Audio', name: 'Sony WH-1000XM6', sku: 'SKU: PKK-0013', price: '₱25,999',
+        desc: 'Sony\'s flagship noise-cancelling headphones with the new QN3 HD chip, improved Precise Voice Pickup 2.0, and 40-hour battery life.',
+        tags: ['LDAC', 'Hi-Res Audio', 'ANC', 'Multipoint', 'Google Fast Pair'],
+        specs: [
+            { k: 'Driver', v: '30mm dome-type (CCAW Voice Coil)' },
+            { k: 'Noise Cancelling', v: 'Auto NC Optimizer · Dual-mic ANC · QN3 HD chip' },
+            { k: 'Frequency Response', v: '4Hz – 40,000Hz (JEITA)' },
+            { k: 'Battery Life', v: '40 hrs ANC on · 5 min charge = 3 hrs playback' },
+            { k: 'Charging', v: 'USB-C · Full charge in ~3.5 hrs' },
+            { k: 'Codecs', v: 'LDAC, AAC, SBC · Hi-Res Audio certified' },
+            { k: 'Bluetooth', v: 'Bluetooth 5.3 · Multipoint (2 devices simultaneously)' },
+            { k: 'Microphones', v: '5 beamforming mics · Precise Voice Pickup 2.0' },
+            { k: 'Controls', v: 'Touch sensor panel + physical buttons · Voice assistant' },
+            { k: 'Weight', v: '250g' },
+            { k: 'Foldable', v: 'Yes · Premium carrying pouch included' },
+            { k: 'Colors', v: 'Midnight Black, Platinum Silver, Warm Copper' },
+        ]
+    },
+    'airpods-pro3': {
+        emoji: '🎧', cat: 'Audio', name: 'Apple AirPods Pro 3', sku: 'SKU: PKK-0014', price: '₱14,499',
+        desc: 'AirPods Pro 3 with the H2 chip deliver next-level ANC, personalized Spatial Audio, and a groundbreaking FDA-cleared Hearing Aid feature.',
+        tags: ['H2 Chip', 'ANC', 'Spatial Audio', 'Hearing Aid', 'MagSafe'],
+        specs: [
+            { k: 'Chip', v: 'Apple H2 (earbuds) · U1 chip (case)' },
+            { k: 'ANC', v: 'Adaptive Active Noise Cancellation · Transparency Mode · Conversation Aware' },
+            { k: 'Audio', v: 'Personalized Spatial Audio · Dynamic head tracking · AAC-ELD' },
+            { k: 'Hearing Aid', v: 'FDA-cleared Hearing Aid feature · Built-in Hearing Test · up to 25dB loss' },
+            { k: 'Battery (earbuds)', v: 'Up to 7 hrs (ANC off) · 5.5 hrs (ANC on)' },
+            { k: 'Battery (total)', v: 'Up to 36 hrs with MagSafe Charging Case' },
+            { k: 'Charging', v: 'MagSafe · Qi2 · USB-C' },
+            { k: 'Bluetooth', v: 'Bluetooth 5.3 · Automatic device switching' },
+            { k: 'Controls', v: 'Force sensor · Volume swipe gesture' },
+            { k: 'Resistance', v: 'IP54 earbuds + case' },
+            { k: 'Find My', v: 'Precision Finding with U1 chip · Separation alerts' },
+            { k: 'Colors', v: 'White' },
+        ]
+    },
+};
+
+function openSpec(id) {
+    const p = SPECS[id];
+    if (!p) return;
+    document.getElementById('modalEmoji').textContent   = p.emoji;
+    document.getElementById('modalCat').textContent     = p.cat;
+    document.getElementById('modalName').textContent    = p.name;
+    document.getElementById('modalThumb').textContent   = p.emoji;
+    document.getElementById('modalPrice').textContent   = p.price;
+    document.getElementById('modalSku').textContent     = p.sku;
+    document.getElementById('modalDesc').textContent    = p.desc;
+    document.getElementById('modalTags').innerHTML      = p.tags.map(t => `<span class="tag">${t}</span>`).join('');
+    document.getElementById('modalSpecs').innerHTML     = p.specs.map(s =>
+        `<div class="spec-item"><div class="spec-key">${s.k}</div><div class="spec-val">${s.v}</div></div>`
+    ).join('');
+    document.getElementById('specOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSpec() {
+    document.getElementById('specOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e) {
+    if (e.target === document.getElementById('specOverlay')) closeSpec();
+}
+
+/* ── CARD CLICK → open spec modal (ignore button clicks) ── */
+document.getElementById('productContainer').addEventListener('click', function(e) {
+    // If the click was on a button (cart / wishlist), do nothing
+    if (e.target.closest('button')) return;
+    const card = e.target.closest('.product-card[data-spec]');
+    if (card) openSpec(card.dataset.spec);
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSpec(); });
+</script>
+
+</body>
+</html>
